@@ -1,6 +1,6 @@
 # Mathematical Modeling of Nanoporous Filtration: A Computational Framework Towards Bioartificial Organs
 
-> **Author:** Sathya G. | B.E. Mechanical Engineering  
+> **Author:** Sathya Jothi | B.E. Mechanical Engineering  
 > **Academic Goal:** MSc Mathematical Modelling and Computational Sciences (University of Luxembourg) → PhD in Computational Science & Engineering (ETH Zurich / Ivy League)
 
 ## 🎯 Research Vision
