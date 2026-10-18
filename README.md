@@ -58,15 +58,17 @@ This project demonstrates core competencies for MSc MMCS and future PhD:
 - Multi-scale modeling (molecular dynamics → continuum) for membrane-protein interaction
 - Aim for publication in *Journal of Computational Physics* / *Lab on a Chip*
 
-This aligns directly with research groups at **ETH Zurich (Computational Science Lab, Prof. Koumoutsakos), MIT (MechE - Biofluids), Stanford (Institute for Computational & Mathematical Engineering)**.
+This aligns directly with research groups at **CSElab, Harvard SEAS (Prof. Koumoutsakos), MIT (MechE - Biofluids), Stanford (Institute for Computational & Mathematical Engineering)**.
 
 ## 📚 References
-1.  Fissell et al., *Silicon nanopore membrane (SNM) for implantable artificial kidney*, Nature.
-2.  Bruus, H., *Theoretical Microfluidics*.
-3.  Roy et al., *The Kidney Project, UCSF*.
+1. Fissell, W.H., Dubnisheva, A., Eldridge, A.N., et al., *High-Performance Silicon Nanopore Hemofiltration Membranes*, Journal of Membrane Science, 326, 58-63 (2009).
+2. Kensinger, C., et al., *First Implantation of Silicon Nanopore Membrane Hemofilters*, ASAIO Journal, 62, 491-495 (2016).
+3. Bruus, H., *Theoretical Microfluidics*, Oxford University Press (2008).
+4. Roy, S., Fissell, W.H., et al., *The Kidney Project, UCSF - Implantable Bioartificial Kidney*, Nature Communications (2023) & Annual Reviews.
 
 ## 📫 Contact & Portfolio
-**Sathya G.** | B.E. Mechanical Engineering | Aspiring Computational Scientist
+**Sathya Jothi** | B.E. Mechanical Engineering | Aspiring Computational Scientist
+- Email: sathyajothi83@gmail.com
 - GitHub: @sathya-guru
 - Focus: Mathematical Modeling, CFD, Scientific ML
 
