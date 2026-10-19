@@ -1,0 +1,36 @@
+# Mathematical Formulation of Silicon Nanopore Membrane (SNM)
+### MechE to MMCS Bridge | Sathya Jothi | sathyajothi83@gmail.com
+
+## 1. Problem Motivation
+Implantable bioartificial kidney uses slit pores (2µm x 5-8nm) mimicking natural kidney podocytes. Goal: Model blood flow + membrane bending.
+
+## 2. Governing Equations
+**Fluid (Blood):** ρ(∂u/∂t + u·∇u) = -∇p + μ∇²u
+- Pulsatile inlet: u(t)=U0+U1*sin(ωt) (Heartbeat 1.2Hz)
+
+**Solid (Silicon Membrane - 400nm thick):** 
+ρ_s*h*∂²w/∂t² + D∇⁴w = Δp , D=E*h³/12(1-ν²)
+
+**FSI Coupling (Main Concept):**
+- u_fluid = ∂w/∂t (velocity same at interface)
+- Pressure deforms membrane -> slit width changes -> flow changes (Loop)
+
+## 3. Key Numbers
+- Re ~ 120 (Laminar)
+- Womersley α ~ 2.5 (Heartbeat effect must include)
+- Insight: 1nm deflection = 20% change in flow (since Resistance ∝ 1/h³)
+
+## 4. Uncertainty (UQ) - Why Harvard CSElab needs this?
+Manufacturing: h = 5-8nm varies. 
+If h error 10% -> Permeability error 30% (3x amplification!)
+=> Need ML/UQ tools from CSElab.
+
+## 5. Roadmap
+Phase 1: This math model (Done)
+Phase 2: FEniCSx FSI simulation (MMCS)
+Phase 3: DeepONet for fast prediction (PhD - Harvard)
+
+## 6. References
+1. Fissell et al., J. Membrane Sci 2009
+2. Kensinger et al., ASAIO J 2016
+3. Bruus, Theoretical Microfluidics, OUP 2008
