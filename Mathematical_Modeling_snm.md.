@@ -1,36 +1,129 @@
-# Mathematical Formulation of Silicon Nanopore Membrane (SNM)
-### MechE to MMCS Bridge | Sathya Jothi | sathyajothi83@gmail.com
+# Phase 2: Fluid-Structure Interaction & Uncertainty Quantification
+### MSc Thesis Foundation | Sathya Jothi | Target: MMCS UniLu -> ETH / Harvard
 
-## 1. Problem Motivation
-Implantable bioartificial kidney uses slit pores (2µm x 5-8nm) mimicking natural kidney podocytes. Goal: Model blood flow + membrane bending.
+This document is the core of Phase 2. While Phase 1 was Stokes flow in a rigid pore, Phase 2 introduces reality: Membrane deforms + Manufacturing is not perfect.
 
-## 2. Governing Equations
-**Fluid (Blood):** ρ(∂u/∂t + u·∇u) = -∇p + μ∇²u
-- Pulsatile inlet: u(t)=U0+U1*sin(ωt) (Heartbeat 1.2Hz)
+## 1. Why Phase 1 is Not Enough? (The Gap)
 
-**Solid (Silicon Membrane - 400nm thick):** 
-ρ_s*h*∂²w/∂t² + D∇⁴w = Δp , D=E*h³/12(1-ν²)
+Phase 1 assumption: Rigid membrane, h = constant.
+Reality:
+1. Silicon membrane is only 400nm thick -> It WILL bend under 80 mmHg blood pressure.
+2. Slit is 5-8nm -> Even 1nm bending = 20% flow change.
+3. Manufacturing error -> Every slit is not exactly 6.5nm.
 
-**FSI Coupling (Main Concept):**
-- u_fluid = ∂w/∂t (velocity same at interface)
-- Pressure deforms membrane -> slit width changes -> flow changes (Loop)
+So we need two new physics: FSI and UQ.
 
-## 3. Key Numbers
-- Re ~ 120 (Laminar)
-- Womersley α ~ 2.5 (Heartbeat effect must include)
-- Insight: 1nm deflection = 20% change in flow (since Resistance ∝ 1/h³)
+## 2. FSI Formulation: Blood + Bending Membrane
 
-## 4. Uncertainty (UQ) - Why Harvard CSElab needs this?
-Manufacturing: h = 5-8nm varies. 
-If h error 10% -> Permeability error 30% (3x amplification!)
-=> Need ML/UQ tools from CSElab.
+### 2.1 Fluid Domain: Pulsatile Blood Flow
+Blood is now pulsatile, not steady. Heartbeat matters.
 
-## 5. Roadmap
-Phase 1: This math model (Done)
-Phase 2: FEniCSx FSI simulation (MMCS)
-Phase 3: DeepONet for fast prediction (PhD - Harvard)
+Navier-Stokes (Micro-scale):
+ρ_f*(∂u/∂t + u·∇u) = -∇p + μ∇²u
+∇·u = 0
 
-## 6. References
-1. Fissell et al., J. Membrane Sci 2009
-2. Kensinger et al., ASAIO J 2016
-3. Bruus, Theoretical Microfluidics, OUP 2008
+BC: Inlet Pulsatile: u_in(t) = U0 + U1*sin(2π*1.2*t)  (1.2 Hz = heartbeat)
+Material: ρ=1060 kg/m3, μ=3.5e-3 Pa.s
+
+### 2.2 Solid Domain: Thin Plate Theory
+Silicon membrane as Kirchhoff-Love thin plate. Why? h_mem = 400nm << L_mem = 2µm.
+
+Equation:
+ρ_s * h * ∂²w/∂t² + D*∇⁴w = Δp(t)
+
+Where,
+w(x,y,t) = out-of-plane deflection
+D = E*h³ / 12(1-ν²) = Flexural Rigidity
+E = 170 GPa (Polysilicon), ν = 0.22, h=400nm
+
+Typical D = 1.05e-12 N.m. Very small -> Flexible!
+
+### 2.3 FSI Coupling: The Heart of My Work
+Interface Γ (membrane surface):
+
+1. Kinematic Condition (Velocity continuity):
+   u_fluid = ∂w/∂t  -> Blood moves as fast as membrane bends.
+
+2. Dynamic Condition (Stress continuity):
+   σ_fluid·n = σ_solid·n -> Pressure from blood = Force on membrane.
+
+Two-way coupling:
+Blood Pressure -> Membrane Bends (w increases) -> Slit height h_slit = h0 + w -> Flow Resistance R_hyd ~ 1/h_slit³ -> Flow Q changes -> Pressure changes again. LOOP!
+
+### 2.4 Non-Dimensional Numbers for FSI
+
+| Number | Formula | Value | Meaning |
+|---|---|---|---|
+| Cauchy (Ca) | ρ_f*U² / E | ~1e-9 | Small deformation but critical for nm slit |
+| Womersley (α) | R*sqrt(ωρ/μ) | ~2.5 | Pulsatile inertia cannot be ignored |
+| Strouhal (St) | f*L / U | ~0.8 | Flow time ~ Membrane time |
+
+Key Insight: Linear plate theory is valid (Ca << 1) but geometric non-linearity in flow is huge because R_hyd ∝ 1/h³.
+
+## 3. UQ Formulation: Manufacturing Variation
+
+### 3.1 Problem Definition
+Manufacturing process (MEMS etching) cannot make all slits exactly 6.5nm. Variation is Gaussian.
+
+h_slit ~ N(μ=6.5nm, σ=0.8nm)  [Range 5-8nm]
+E_silicon ~ N(μ=170 GPa, σ=5 GPa)
+
+### 3.2 Propagation: Why UQ is Mandatory?
+For Slit pore: Hydraulic Resistance
+R_hyd = 12*μ*L / (w*h³*[1-0.63*(h/w)]) * (1/n)  (n = no. of slits)
+
+Simplified: Lp (Permeability) ∝ h³
+
+Sensitivity:
+∂Lp/∂h = 3h² / (12μL)
+Relative Error: δLp/Lp = 3 * (δh/h)
+
+If manufacturing error δh/h = 10% (0.65nm)
+Then Flow error δLp/Lp = 30%!!!
+
+3x AMPLIFICATION! This proves deterministic model is useless. We MUST do UQ.
+
+### 3.3 My Proposed Methods (Link to CSElab Harvard)
+
+**Method 1: Monte Carlo (Baseline - Slow)**
+Sample 1000 h values -> Run 1000 FSI simulations -> Get mean & variance of Q.
+Cost: 1000 * 2 hours = 2000 hours. Too costly.
+
+**Method 2: Polynomial Chaos Expansion (PCE) - My MMCS Plan**
+Q(h) ≈ Σ_{k=0}^{P} c_k * Ψ_k(ξ) where ξ is random variable for h.
+Need only ~ 50 simulations to get accurate distribution.
+
+**Method 3: Physics-Informed Neural Network (PINN) + DeepONet (PhD Goal)**
+Goal: Learn Operator: G: (h, Δp(t)) -> Q(t)
+Train DeepONet on multi-fidelity data (Low-fi: Analytical, High-fi: FEniCSx FSI).
+Prof. Koumoutsakos's group at Harvard CSElab is leader in this. This is exact alignment.
+
+## 4. Numerical Implementation Roadmap
+
+**Step 1 (Current Repo - Analytical):** Done. Scaling laws derived.
+
+**Step 2 (MMCS Semester 1-2):**
+Solver: FEniCSx + ALE (Arbitrary Lagrangian-Eulerian) for moving mesh.
+- Fluid: P2-P1 Taylor-Hood elements
+- Solid: MITC plate elements or FEniCSx Kirchhoff-Love via penalty.
+- Coupling: Partitioned iterative scheme (preCICE library).
+
+**Step 3 (MMCS Thesis - Semester 3-4):**
+- Implement PCE using Chaospy + FEniCSx.
+- Publish: Journal of Computational Physics / Lab on a Chip.
+
+**Step 4 (PhD - ETH/Harvard):**
+- Multi-fidelity SciML model for real-time hemocompatibility prediction.
+
+## 5. Expected Outcome
+
+1.  Quantitative: How much does 1nm manufacturing error reduce kidney filter lifetime?
+2.  Design Rule: Optimal membrane thickness h_mem that minimizes flow variation but keeps strength.
+3.  Open-source code that UCSF Kidney Project can directly use.
+
+## 6. References for Phase 2
+
+1. Bazilevs et al., Computational Fluid-Structure Interaction, Wiley 2013
+2. Xiu, Numerical Methods for Stochastic Computations, Princeton 2010 (for PCE)
+3. Lu et al., DeepONet, Nature Machine Intelligence 2021 (Harvard CSElab link)
+4. FEniCSx Documentation - FSI Tutorials
